@@ -1,0 +1,156 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ACG CSAP Networking Lab - Initial Setup
+Parameters :
+  LatestAmiId :
+    Type : 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t1.micro, t2.micro, t3.micro]
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - 
+          Key: 'Name'
+          Value: 'ACG CSAP Networking Lab'
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: VPC
+      CidrBlock: 10.0.0.0/24
+      Tags:
+        - 
+          Key: 'Name'
+          Value: 'ACG CSAP Networking Lab'
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - 
+          Key: 'Name'
+          Value: 'ACG CSAP Networking Lab'
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+  PublicNetworkAcl:
+    Type: "AWS::EC2::NetworkAcl"
+    Properties:
+      VpcId:
+        Ref: "VPC"
+  PublicNACLEntryEgress100:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: '0.0.0.0/0'
+      NetworkAclId: 
+        Ref: PublicNetworkAcl
+      Egress: 'true'
+      PortRange:
+        From: '0'
+        To: '65535'
+      Protocol: '-1'
+      RuleAction: Allow
+      RuleNumber: 100
+  PublicNACLEntryIngress100:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: '0.0.0.0/0'
+      NetworkAclId: 
+        Ref: PublicNetworkAcl
+      Egress: 'false'
+      PortRange: 
+        From: '0'
+        To: '65535'
+      Protocol: -1
+      RuleAction: Allow
+      RuleNumber: 100
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicSubnetNetworkAclAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      NetworkAclId:
+        Ref: PublicNetworkAcl
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: HTTP ingress
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '80'
+        ToPort: '80'
+        CidrIp: 0.0.0.0/0
+      Tags:
+        - 
+          Key: 'Name'
+          Value: 'ACG CSAP Networking Lab'
+  WebServerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref 'InstanceType'
+      ImageId: !Ref LatestAmiId
+      NetworkInterfaces:
+      - GroupSet:
+        - Ref: WebServerSecurityGroup
+        AssociatePublicIpAddress: 'false'
+        DeviceIndex: '0'
+        DeleteOnTermination: 'true'
+        SubnetId:
+          Ref: PublicSubnet
+      Tags:
+        - 
+          Key: 'Name'
+          Value: 'ACG CSAP Networking Lab'
+      UserData:   
+        Fn::Base64: !Sub |
+            #!/bin/bash -xe
+            sudo yum update -y
+            sudo yum install httpd -y
+            sudo systemctl start httpd
+            sudo systemctl enable httpd
+            echo "<html><body><p><h1 align=center>Keep Being Awesome Cloud Gurus!</h1></body></html>" > /var/www/html/index.html
+  EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+      InstanceId:
+        Ref: WebServerInstance
+Outputs:
+  FQDN:
+    Value: !GetAtt WebServerInstance.PublicDnsName
+

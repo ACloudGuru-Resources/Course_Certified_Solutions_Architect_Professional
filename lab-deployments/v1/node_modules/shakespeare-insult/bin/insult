@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+var shake = require('..');
+console.log(shake.random());
