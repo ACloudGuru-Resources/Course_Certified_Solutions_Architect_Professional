@@ -147,7 +147,7 @@ Resources:
   EIP:
     Type: AWS::EC2::EIP
     Properties:
-      Domain: VPC
+      Domain: vpc
       InstanceId:
         Ref: WebServerInstance
 Outputs:
