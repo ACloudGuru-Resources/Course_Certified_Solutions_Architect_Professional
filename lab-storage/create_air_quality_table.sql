@@ -1,5 +1,3 @@
-/* Creates a table referencing a directory full of nested JSON files */
-
 CREATE EXTERNAL TABLE `air_quality`(
   `date` struct<utc:string,local:string> COMMENT 'from deserializer', 
   `parameter` string COMMENT 'from deserializer', 
