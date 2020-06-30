@@ -1,5 +1,3 @@
-/* Creates a view of just Ozone readings in the US */
-
 CREATE OR REPLACE VIEW v_O3_US AS 
 SELECT
   "city"
