@@ -12,7 +12,7 @@ exports.handler = function(event, context, callback) {
    console.log(s3message);
    var eParams = {
       Destination: {
-         ToAddresses: ["xxxxxxxxx12@gmail.com"]
+         ToAddresses: ["xxxxxxxxx12@gmail.com"] //replace with your destination email address
       },
       Message: {
          Body: {
@@ -24,7 +24,7 @@ exports.handler = function(event, context, callback) {
             Data: "cloudtrail logs"
          }
       },
-      Source: "coxxxxxx@gmail.com"
+      Source: "coxxxxxx@gmail.com" //replace with your sender email address
    };
    var email = ses.sendEmail(eParams, function(err, data) {
       if (err) console.log(err);
