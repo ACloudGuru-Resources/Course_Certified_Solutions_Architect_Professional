@@ -1,8 +1,10 @@
-const aws =  require("aws-sdk");
-const sns = new aws.SNS({
-region:'us-east-1'
+const { SES } = require("@aws-sdk/client-ses");
+const { SNS } = require("@aws-sdk/client-sns");
+
+const sns = new SNS({
+   region:'us-east-1'
 });
-var ses = new aws.SES({
+var ses = new SES({
    region: 'us-east-1'
 });
 exports.handler = function(event, context, callback) {
@@ -24,7 +26,7 @@ exports.handler = function(event, context, callback) {
             Data: "cloudtrail logs"
          }
       },
-      Source: "coxxxxxx@gmail.com"
+      Source: "xxxxxxxxx12@gmail.com"
    };
    var email = ses.sendEmail(eParams, function(err, data) {
       if (err) console.log(err);
